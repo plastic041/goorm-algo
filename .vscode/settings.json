@@ -1,0 +1,9 @@
+{
+  "deno.enable": true,
+  "deno.lint": true,
+  "deno.unstable": true,
+  "editor.indentSize": "tabSize",
+  "editor.tabSize": 2,
+  "editor.defaultFormatter": "denoland.vscode-deno",
+  "prettier.enable": false
+}
