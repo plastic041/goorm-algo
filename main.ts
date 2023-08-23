@@ -1,45 +1,34 @@
-const data = `4 2
-0 0 0 1
-0 0 1 0
-0 0 1 0
-0 1 1 1`.split("\n");
+const data = `100`.split("\n");
 
-type CoordString = `${number},${number}`;
-
-function getCoordString(x: number, y: number): CoordString {
-  return `${x},${y}`;
-}
+const HEALS = {
+  BANDAGE: 1,
+  MEDICINE: 7,
+  PAINKILLER: 14,
+} as const;
 
 function solve(lines: Array<string>): string {
-  const [_, k] = lines.shift()!.split(" ").map(Number);
+  let n = lines.shift() as unknown as number;
+  let healCount = 0;
 
-  const map: Map<CoordString, boolean> = new Map();
+  const maxPainkiller = Math.floor(n / HEALS.PAINKILLER);
+  if (maxPainkiller > 0) {
+    n -= maxPainkiller * HEALS.PAINKILLER;
+    healCount += maxPainkiller;
+  }
 
-  lines.forEach((line, y) => {
-    line.split(" ").forEach((value, x) => {
-      map.set(`${x},${y}`, value === "1");
-    });
-  });
+  const maxMedicine = Math.floor(n / HEALS.MEDICINE);
+  if (maxMedicine > 0) {
+    n -= maxMedicine * HEALS.MEDICINE;
+    healCount += maxMedicine;
+  }
 
-  let hasKNeighborsCount = 0;
-  [...map].forEach(([coordString, value]) => {
-    if (!value) {
-      let neighborsCount = 0;
-      const [x, y] = coordString.split(",").map(Number);
-      if (map.get(getCoordString(x - 1, y - 1))) neighborsCount++;
-      if (map.get(getCoordString(x, y - 1))) neighborsCount++;
-      if (map.get(getCoordString(x + 1, y - 1))) neighborsCount++;
-      if (map.get(getCoordString(x - 1, y))) neighborsCount++;
-      if (map.get(getCoordString(x + 1, y))) neighborsCount++;
-      if (map.get(getCoordString(x - 1, y + 1))) neighborsCount++;
-      if (map.get(getCoordString(x, y + 1))) neighborsCount++;
-      if (map.get(getCoordString(x + 1, y + 1))) neighborsCount++;
+  const maxBandage = Math.floor(n / HEALS.BANDAGE);
+  if (maxBandage > 0) {
+    n -= maxBandage * HEALS.BANDAGE;
+    healCount += maxBandage;
+  }
 
-      if (neighborsCount === k) hasKNeighborsCount++;
-    }
-  });
-
-  return String(hasKNeighborsCount);
+  return `${healCount}`;
 }
 
 console.log(solve(data));
