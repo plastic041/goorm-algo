@@ -1,75 +1,70 @@
-const data = `4 4
-0 0 @ 0
-0 0 0 0
-0 # 0 0
-0 0 0 @
-2 2
-2 3
-1 4
-1 4`.split("\n");
+const data = `4
+4 2
+2 4
+1L 3D 3L 1U
+2D 2L 4U 1U
+2D 2L 4U 3L
+4D 4D 1R 4R`.split("\n");
 
-type Terrain = "@" | "#" | "0";
+function solve(lines: string[]) {
+  const commands = {
+    U: [-1, 0],
+    D: [1, 0],
+    R: [0, 1],
+    L: [0, -1],
+  } as const;
 
-type Point = {
-  x: number;
-  y: number;
-};
+  const inputs = lines.map((line) => line.trim().split(/\s+/));
+  const size = Number(inputs.shift()![0]);
+  const goormStart = inputs.shift()!.map((item) => Number(item) - 1); // subtract 1 for 0-based index
+  const playerStart = inputs.shift()!.map((item) => Number(item) - 1);
+  const board = inputs.map((row) =>
+    row.map((item) => ({
+      count: Number(item.slice(0, -1)),
+      command: item.slice(-1),
+    }))
+  );
 
-type Tile = {
-  terrain: Terrain;
-  point: Point;
-  num: number;
-};
+  const result = {
+    goorm: 0,
+    player: 0,
+  };
 
-function solve(lines: Array<string>): string {
-  const [width, height] = lines[0].split(" ").map(Number);
-  const map: Map<`${number},${number}`, Tile> = new Map();
-  for (let y = 1; y <= height; y++) {
-    const row = lines[y].split(" ");
-    for (let x = 1; x <= width; x++) {
-      const terrain = row[x - 1] as Terrain;
-      map.set(`${x},${y}`, {
-        terrain,
-        point: { x, y },
-        num: 0,
-      });
-    }
-  }
+  function run(name: keyof typeof result, start: number[]) {
+    const visited = Array(size).fill(0).map(() => Array(size).fill(false));
+    let [y, x] = start;
+    let score = 0;
 
-  lines.slice(height + 1).forEach((line) => {
-    const [y, x] = line.split(" ").map(Number);
-    const neighbors: Array<`${number},${number}`> = [
-      `${x},${y}`,
-      `${x - 1},${y}`,
-      `${x + 1},${y}`,
-      `${x},${y - 1}`,
-      `${x},${y + 1}`,
-    ];
-    neighbors.forEach((neighbor) => {
-      const tile = map.get(neighbor);
-      if (tile) {
-        if (tile.terrain === "@") {
-          tile.num += 2;
-        } else if (tile.terrain === "#") {
-          tile.num += 0;
-        } else if (tile.terrain === "0") {
-          tile.num += 1;
+    while (!visited[y][x]) {
+      score++;
+      visited[y][x] = true;
+
+      const { count, command } = board[y][x];
+      // console.log(`${count}${command} ${name} ${score}`);
+      for (let i = 0; i < count; i++) {
+        y = (y + commands[command as keyof typeof commands][0] + size) % size;
+        x = (x + commands[command as keyof typeof commands][1] + size) % size;
+        if (visited[y][x]) {
+          break;
+        }
+        if (i < count - 1) {
+          score++;
+          visited[y][x] = true;
+          // const current = board[y][x];
+          // console.log(`${current.count}${current.command} ${name} ${score}`);
         }
       }
-    });
-  });
+    }
 
-  const a = Array.from(map.values()).map((tile) => tile.num);
-  // log 4 x 4
-  console.log(a.slice(0, 4));
-  console.log(a.slice(4, 8));
-  console.log(a.slice(8, 12));
-  console.log(a.slice(12, 16));
+    result[name] = score;
+  }
 
-  const tiles = Array.from(map.values());
-  const max = Math.max(...tiles.map((tile) => tile.num));
+  run("goorm", goormStart);
+  run("player", playerStart);
 
-  return max.toString();
+  return result.goorm > result.player
+    ? "goorm " + result.goorm
+    : "player " + result.player;
 }
 
 console.log(solve(data));
