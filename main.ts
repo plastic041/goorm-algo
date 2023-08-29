@@ -1,42 +1,84 @@
-import { assertEquals } from "https://deno.land/std@0.200.0/assert/mod.ts";
+type Cell = 0 | 1;
 
 function solve(lines: string[]): number {
-  const damage = Number(lines.shift());
-  const items = lines.shift()!.split(" ").map(Number);
+  // don't use recursion
+  const size = Number(lines.shift());
+  const matrix: Cell[][] = lines.map((line) =>
+    line.split(" ").map((cell) => Number(cell) as Cell)
+  );
 
-  const dp: number[] = Array(damage + 1).fill(Infinity);
-  dp[0] = 0;
+  const visited: boolean[][] = matrix.map((row) => row.map(() => false));
 
-  for (const item of items) {
-    for (let i = item; i < dp.length; i++) {
-      dp[i] = Math.min(dp[i], dp[i - item] + 1);
+  let count = 0;
+
+  // function dfs(row: number, col: number): void {
+  //   if (row < 0 || col < 0 || row >= size || col >= size) return;
+  //   if (visited[row][col]) return;
+  //   if (matrix[row][col] === 0) return;
+
+  //   visited[row][col] = true;
+
+  //   dfs(row - 1, col);
+  //   dfs(row + 1, col);
+  //   dfs(row, col - 1);
+  //   dfs(row, col + 1);
+  // }
+
+  // don't use recursion
+  for (let row = 0; row < size; row++) {
+    for (let col = 0; col < size; col++) {
+      const stack: [number, number][] = [];
+      if (!visited[row][col] && matrix[row][col] === 1) {
+        stack.push([row, col]);
+        visited[row][col] = true;
+        count++;
+      }
+
+      while (stack.length > 0) {
+        const [r, c] = stack.pop()!;
+        if (r - 1 >= 0 && !visited[r - 1][c] && matrix[r - 1][c] === 1) {
+          stack.push([r - 1, c]);
+          visited[r - 1][c] = true;
+        }
+        if (r + 1 < size && !visited[r + 1][c] && matrix[r + 1][c] === 1) {
+          stack.push([r + 1, c]);
+          visited[r + 1][c] = true;
+        }
+        if (c - 1 >= 0 && !visited[r][c - 1] && matrix[r][c - 1] === 1) {
+          stack.push([r, c - 1]);
+          visited[r][c - 1] = true;
+        }
+        if (c + 1 < size && !visited[r][c + 1] && matrix[r][c + 1] === 1) {
+          stack.push([r, c + 1]);
+          visited[r][c + 1] = true;
+        }
+      }
     }
   }
 
-  if (dp[damage] === Infinity) {
-    return -1;
-  }
-  return dp[damage];
+  // for (let row = 0; row < size; row++) {
+  //   for (let col = 0; col < size; col++) {
+  //     if (!visited[row][col] && matrix[row][col] === 1) {
+  //       dfs(row, col);
+  //       count++;
+  //     }
+  //   }
+  // }
+
+  return count;
 }
 
-// Deno.test("solve", () => {
-//   assertEquals(
-//     solve(`11
-// 2 7`.split("\n")),
-//     3,
-//   );
+const data1 = `3
+0 1 0
+1 0 1
+1 1 1`;
 
-//   assertEquals(
-//     solve(`10000
-// 4 13`.split("\n")),
-//     772,
-//   );
+console.log(solve(data1.split("\n")));
 
-//   assertEquals(
-//     solve(`10
-// 3 5`.split("\n")),
-//     2,
-//   );
-// });
+const data2 = `4
+1 1 1 1
+0 0 0 1
+1 1 1 1
+1 0 0 1`;
 
-console.log(solve([...Array(2)].map(() => prompt()) as string[]));
+console.log(solve(data2.split("\n")));
