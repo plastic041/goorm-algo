@@ -1,55 +1,55 @@
-function solve(lines: string[]) {
-  const [N, M, K] = lines.shift()!.split(" ").map(Number);
+function solve(lines: string[]): number {
+  const [_, money] = lines.shift()!.split(" ").map(Number);
+  const fruits = lines.map((line) => line.split(" "))
+    .map(
+      ([pStr, vStr]) => ({
+        price: Number(pStr),
+        value: Number(vStr),
+        unitValue: Number(vStr) / Number(pStr),
+      }),
+    )
+    .sort((a, b) => b.unitValue - a.unitValue);
 
-  const graph: number[][] = new Array(N + 1).fill(null).map(() => []);
-  for (const edge of lines) {
-    const [from, to] = edge.split(" ").map(Number);
-    graph[from].push(to);
-    graph[to].push(from);
+  let totalValue = 0;
+  let spent = 0;
+
+  for (const fruit of fruits) {
+    const { price, value } = fruit;
+
+    if (spent + price <= money) {
+      spent += price;
+      totalValue += value;
+    } else {
+      const availableMoney = money - spent;
+      const availableValue = availableMoney * fruit.unitValue;
+      spent += availableMoney;
+      totalValue += availableValue;
+    }
   }
 
-  const visited = new Array(N + 1).fill(false);
-  visited[K] = true;
-  let currentNode = K;
-  let lastNode = K;
-  let visitedCount = 1;
-
-  while (true) {
-    let minNextNode = Infinity;
-    for (const neighbor of graph[currentNode]) {
-      if (!visited[neighbor] && neighbor < minNextNode) {
-        minNextNode = neighbor;
-      }
-    }
-
-    if (minNextNode === Infinity) {
-      break;
-    }
-
-    visited[minNextNode] = true;
-    currentNode = minNextNode;
-    lastNode = minNextNode;
-    visitedCount++;
-  }
-
-  return `${visitedCount} ${lastNode}`;
+  return totalValue;
 }
 
-const data1 = `6 6 1
-1 2
-1 3
-2 3
-3 4
-3 5
-4 6`;
+const data1 = `6 13
+2 8
+7 35
+1 5
+3 12
+10 30
+1 7`;
 
 console.log(solve(data1.split("\n")));
 
-const data2 = `6 5 1
-1 2
-2 3
-3 4
-4 5
-5 6`;
+const data2 = `5 4
+1 999999996
+1 999999997
+1 999999998
+1 999999999
+1 1000000000`;
 
 console.log(solve(data2.split("\n")));
+
+const data3 = `1 1
+1000000000 1000000000`;
+
+console.log(solve(data3.split("\n")));
