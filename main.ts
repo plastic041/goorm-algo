@@ -1,93 +1,123 @@
 function solve(lines: string[]): string {
-  type Node = number;
+  const [N, K, _] = lines.shift()!.split(" ").map(Number);
 
-  const [N, M, START, END] = lines.shift()!.split(" ").map(Number);
-  const graphFrom: Map<Node, Set<Node>> = new Map();
-  const graphTo: Map<Node, Set<Node>> = new Map();
-  lines.forEach((line) => {
-    const [from, to] = line.split(" ").map(Number);
-    if (!graphFrom.has(from)) {
-      graphFrom.set(from, new Set());
-    }
-    graphFrom.get(from)?.add(to);
-    if (!graphTo.has(to)) {
-      graphTo.set(to, new Set());
-    }
-    graphTo.get(to)?.add(from);
-  });
-
-  function dfs(disabled: number) {
-    const queue: Array<[Node, number]> = [[START, 1]];
-    const visited: Set<Node> = new Set();
-
-    if (disabled === START || disabled === END) {
-      return -1;
-    }
-
-    while (queue.length > 0) {
-      const [node, steps] = queue.shift()!;
-      if (node === END) {
-        return steps;
-      }
-      visited.add(node);
-      const nextNodesFrom = graphFrom.get(node);
-      const nextNodesTo = graphTo.get(node);
-      if (nextNodesFrom) {
-        nextNodesFrom.forEach((nextNode) => {
-          if (nextNode !== disabled && !visited.has(nextNode)) {
-            queue.push([nextNode, steps + 1]);
-          }
-        });
-      }
-      if (nextNodesTo) {
-        nextNodesTo.forEach((nextNode) => {
-          if (nextNode !== disabled && !visited.has(nextNode)) {
-            queue.push([nextNode, steps + 1]);
-          }
-        });
-      }
-    }
-    return -1;
+  function getCoord(index: number): [number, number] {
+    return [Math.floor(index / N), index % N];
   }
 
-  let result = "";
-  for (let i = 1; i <= N; i++) {
-    result += `${dfs(i)}
-`;
+  function getIndex(coord: [number, number]): number {
+    return coord[0] * N + coord[1];
   }
 
-  return result;
+  function getNeighborsIndex(index: number): number[] {
+    const [x, y] = getCoord(index);
+    const neighbors: number[] = [];
+
+    if (x > 0) {
+      neighbors.push(getIndex([x - 1, y]));
+    }
+    if (x < N - 1) {
+      neighbors.push(getIndex([x + 1, y]));
+    }
+    if (y > 0) {
+      neighbors.push(getIndex([x, y - 1]));
+    }
+    if (y < N - 1) {
+      neighbors.push(getIndex([x, y + 1]));
+    }
+
+    return neighbors;
+  }
+
+  function getGroupsWithDfs(graph: Array<string>) {
+    const visited: Array<boolean> = [];
+    const groups: Array<Array<number>> = [];
+
+    for (let i = 0; i < N * N; i++) {
+      if (visited[i] || graph[i] === ".") {
+        continue;
+      }
+      const char = graph[i];
+      const group: Array<number> = [];
+      const stack = [i];
+
+      while (stack.length > 0) {
+        const index = stack.pop()!;
+
+        if (visited[index]) {
+          continue;
+        }
+
+        const neighbors = getNeighborsIndex(index);
+        if (char !== graph[index]) {
+          continue;
+        }
+
+        group.push(index);
+        visited[index] = true;
+
+        neighbors.forEach((neighbor) => stack.push(neighbor));
+      }
+
+      if (group.length > 0) {
+        groups.push(group);
+      }
+    }
+
+    return groups;
+  }
+
+  const graph = lines.slice(0, N).join("").split("");
+  const queries = lines.slice(N).map((line) => line.split(" ")); // [y, x, char]
+
+  for (const query of queries) {
+    const [y, x, char] = query;
+    const index = getIndex([Number(y) - 1, Number(x) - 1]);
+    graph[index] = char;
+
+    getGroupsWithDfs(graph)
+      .filter((group) => group.length >= K)
+      .flat()
+      .forEach((index) => graph[index] = ".");
+  }
+
+  return graph.join("").match(new RegExp(`.{${N}}`, "g"))!.join("\n");
 }
 
-const data1 = `5 5 1 4
-1 3
-4 3
-2 5
-4 2
-1 5`;
+const data1 = `5 5 6
+AB..C
+BBAZZ
+....A
+BBB.B
+CCBAB
+3 4 A
+3 1 A
+3 3 A
+3 2 B
+3 2 A
+1 2 D`;
 
 console.log(
   solve(data1.split("\n")),
-  `-1
-3
-4
--1
-3`,
+  `AD..C
+...ZZ
+.....
+....B
+CC.AB`,
 );
 
-// const data2 = `4 4 3 1
-// 4 1
-// 4 3
-// 3 2
-// 2 1`;
+const data2 = `3 3 1
+ABA
+B.B
+ABA
+2 2 A`;
 
-// console.log(
-//   solve(data2.split("\n")),
-//   `-1
-// 3
-// -1
-// 3`,
-// );
+console.log(
+  solve(data2.split("\n")),
+  `ABA
+BAB
+ABA`,
+);
 
 // const data3 = `9 10 1 9
 // 1 2
